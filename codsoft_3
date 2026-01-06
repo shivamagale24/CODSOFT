@@ -1,0 +1,150 @@
+import random
+import sqlite3
+from tkinter import *
+from tkinter import messagebox
+
+# ===== DATABASE SETUP =====
+with sqlite3.connect("users.db") as db:
+    cursor = db.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users(
+            Username TEXT NOT NULL UNIQUE,
+            GeneratedPassword TEXT NOT NULL
+        )
+    """)
+    db.commit()
+
+
+# ===== COLOR THEME =====
+BG_MAIN = "#1E1E2E"
+FG_TEXT = "#FFFFFF"
+ACCENT = "#4CAF50"
+ENTRY_BG = "#2A2A40"
+BTN_BG = "#3C3F58"
+
+
+class PasswordGenerator:
+    def __init__(self, master):
+        self.master = master
+        self.username = StringVar()
+        self.passwordlen = IntVar()
+        self.generatedpassword = StringVar()
+
+        master.title("Password Generator")
+        master.geometry("600x450")
+        master.resizable(False, False)
+        master.configure(bg=BG_MAIN)
+
+        Label(master, text="PASSWORD GENERATOR",
+              font=("Arial", 20, "bold"),
+              fg=ACCENT, bg=BG_MAIN).pack(pady=20)
+
+        # ===== USERNAME =====
+        Label(master, text="Enter Username",
+              font=("Arial", 14),
+              fg=FG_TEXT, bg=BG_MAIN).pack()
+
+        self.username_entry = Entry(
+            master, textvariable=self.username,
+            font=("Arial", 14), bg=ENTRY_BG, fg=FG_TEXT,
+            insertbackground="white"
+        )
+        self.username_entry.pack(pady=5)
+
+        # ===== PASSWORD LENGTH =====
+        Label(master, text="Password Length (min 6)",
+              font=("Arial", 14),
+              fg=FG_TEXT, bg=BG_MAIN).pack()
+
+        self.length_entry = Entry(
+            master, textvariable=self.passwordlen,
+            font=("Arial", 14), bg=ENTRY_BG, fg=FG_TEXT,
+            insertbackground="white"
+        )
+        self.length_entry.pack(pady=5)
+
+        # ===== GENERATED PASSWORD =====
+        Label(master, text="Generated Password",
+              font=("Arial", 14),
+              fg=FG_TEXT, bg=BG_MAIN).pack()
+
+        self.password_entry = Entry(
+            master, textvariable=self.generatedpassword,
+            font=("Arial", 14), bg=ENTRY_BG, fg=ACCENT,
+            insertbackground="white"
+        )
+        self.password_entry.pack(pady=5)
+
+        # ===== BUTTONS =====
+        Button(master, text="Generate Password",
+               font=("Arial", 14, "bold"),
+               bg=BTN_BG, fg=FG_TEXT,
+               command=self.generate_password).pack(pady=10)
+
+        Button(master, text="Save",
+               font=("Arial", 14, "bold"),
+               bg=ACCENT, fg="black",
+               command=self.save_to_db).pack(pady=5)
+
+        Button(master, text="Reset",
+               font=("Arial", 14, "bold"),
+               bg="#FF5555", fg="white",
+               command=self.reset_fields).pack(pady=5)
+
+    # ===== PASSWORD GENERATION =====
+    def generate_password(self):
+        name = self.username.get()
+        try:
+            length = int(self.passwordlen.get())
+        except ValueError:
+            messagebox.showerror("Error", "Password length must be a number")
+            return
+
+        if not name.isalpha():
+            messagebox.showerror("Error", "Username must contain only letters")
+            return
+
+        if length < 6:
+            messagebox.showerror("Error", "Password must be at least 6 characters")
+            return
+
+        chars = (
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            "abcdefghijklmnopqrstuvwxyz"
+            "0123456789"
+            "@#%&()?!"
+        )
+
+        password = "".join(random.choice(chars) for _ in range(length))
+        self.generatedpassword.set(password)
+
+    # ===== SAVE TO DATABASE =====
+    def save_to_db(self):
+        if not self.generatedpassword.get():
+            messagebox.showerror("Error", "Generate a password first")
+            return
+
+        try:
+            with sqlite3.connect("users.db") as db:
+                cursor = db.cursor()
+                cursor.execute(
+                    "INSERT INTO users (Username, GeneratedPassword) VALUES (?, ?)",
+                    (self.username.get(), self.generatedpassword.get())
+                )
+                db.commit()
+                messagebox.showinfo("Success", "Password saved successfully")
+        except sqlite3.IntegrityError:
+            messagebox.showerror("Error", "Username already exists")
+
+    # ===== RESET =====
+    def reset_fields(self):
+        self.username.set("")
+        self.passwordlen.set("")
+        self.generatedpassword.set("")
+
+
+# ===== RUN APP =====
+if __name__ == "__main__":
+    root = Tk()
+    PasswordGenerator(root)
+    root.mainloop()

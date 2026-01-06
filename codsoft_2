@@ -1,0 +1,168 @@
+import tkinter as tk
+import math
+
+# ===== COLOR THEME =====
+BG_MAIN = "#1E1E2E"
+ENTRY_BG = "#2A2A40"
+ENTRY_FG = "#FFFFFF"
+BTN_BG = "#3C3F58"
+BTN_FG = "#FFFFFF"
+ACCENT = "#4CAF50"
+HIGHLIGHT = "#4CAF50"
+
+FONT = ('Arial', 10, 'bold')
+ENTRY_FONT = ('Arial', 25)
+
+root = tk.Tk()
+root.title('Scientific Calculator')
+root.configure(bg=BG_MAIN)
+root.resizable(False, False)
+
+# ===== ENTRY FIELD =====
+ent_field = tk.Entry(
+    root,
+    bg=ENTRY_BG,
+    fg=ENTRY_FG,
+    font=ENTRY_FONT,
+    borderwidth=10,
+    justify="right",
+    insertbackground="white"
+)
+ent_field.grid(row=0, columnspan=10, padx=10, pady=10, sticky='nsew')
+ent_field.insert(0, '0')
+
+
+class SC_Calculator:
+    def __init__(self):
+        self.current = ''
+        self.inp_value = True
+        self.result = False
+
+    def Entry(self, value):
+        ent_field.delete(0, 'end')
+        ent_field.insert(0, value)
+
+    def Enter_Num(self, num):
+        self.result = False
+        firstnum = ent_field.get()
+        if self.inp_value:
+            self.current = str(num)
+            self.inp_value = False
+        else:
+            self.current = firstnum + str(num)
+        self.Entry(self.current)
+
+    def Standard_Ops(self, val):
+        try:
+            if val == '=':
+                ans = str(eval(ent_field.get()))
+                self.Entry(ans)
+                self.result = True
+            else:
+                self.Entry(ent_field.get() + val)
+            self.inp_value = False
+        except:
+            self.Entry('Error')
+
+    def Clear_Entry(self):
+        self.current = "0"
+        self.Entry(0)
+        self.inp_value = True
+
+    # ===== SCIENTIFIC FUNCTIONS =====
+    def SQ_Root(self): self._safe(math.sqrt)
+    def Pi(self): self.Entry(math.pi)
+    def E(self): self.Entry(math.e)
+    def Deg(self): self._safe(math.degrees)
+    def Rad(self): self._safe(math.radians)
+    def Exp(self): self._safe(math.exp)
+    def Fact(self): self._safe(lambda x: math.factorial(int(x)))
+    def Sin(self): self._safe(lambda x: math.sin(math.radians(x)))
+    def Cos(self): self._safe(lambda x: math.cos(math.radians(x)))
+    def Tan(self): self._safe(lambda x: math.tan(math.radians(x)))
+    def Sinh(self): self._safe(lambda x: math.sinh(math.radians(x)))
+    def Cosh(self): self._safe(lambda x: math.cosh(math.radians(x)))
+    def Tanh(self): self._safe(lambda x: math.tanh(math.radians(x)))
+    def Ln(self): self._safe(math.log)
+    def Log_10(self): self._safe(math.log10)
+    def Log_2(self): self._safe(math.log2)
+    def Pow_2(self): self._safe(lambda x: x**2)
+    def Pow_3(self): self._safe(lambda x: x**3)
+    def Pow_10_n(self): self._safe(lambda x: 10**int(x))
+    def One_div_x(self): self._safe(lambda x: 1/x)
+    def Abs(self): self._safe(abs)
+
+    def _safe(self, func):
+        try:
+            self.Entry(func(float(ent_field.get())))
+        except:
+            self.Entry("Error")
+
+
+sc_app = SC_Calculator()
+
+# ===== BUTTON CREATOR =====
+def create_btn(text, cmd, r, c, cs=1):
+    btn = tk.Button(
+        root,
+        text=text,
+        command=cmd,
+        font=FONT,
+        bg=BTN_BG,
+        fg=BTN_FG,
+        activebackground=ACCENT,
+        width=5,
+        height=2,
+        highlightbackground=HIGHLIGHT,
+        highlightthickness=2
+    )
+    btn.grid(row=r, column=c, columnspan=cs, padx=8, pady=8, sticky="nsew")
+
+
+# ===== NUMBER BUTTONS =====
+numbers = "789456123"
+i = 0
+for r in range(2, 5):
+    for c in range(3):
+        create_btn(numbers[i], lambda x=numbers[i]: sc_app.Enter_Num(x), r, c)
+        i += 1
+
+create_btn("0", lambda: sc_app.Enter_Num('0'), 5, 0, 2)
+create_btn(".", lambda: sc_app.Standard_Ops('.'), 5, 2)
+
+# ===== BASIC OPS =====
+create_btn("CE", sc_app.Clear_Entry, 1, 0, 2)
+create_btn("√", sc_app.SQ_Root, 1, 2)
+create_btn("+", lambda: sc_app.Standard_Ops('+'), 1, 3)
+create_btn("-", lambda: sc_app.Standard_Ops('-'), 2, 3)
+create_btn("*", lambda: sc_app.Standard_Ops('*'), 3, 3)
+create_btn("/", lambda: sc_app.Standard_Ops('/'), 4, 3)
+create_btn("=", lambda: sc_app.Standard_Ops('='), 5, 3)
+
+# ===== SCIENTIFIC BUTTONS =====
+create_btn("π", sc_app.Pi, 1, 4)
+create_btn("e", sc_app.E, 1, 5)
+create_btn("Deg", sc_app.Deg, 1, 6)
+create_btn("Rad", sc_app.Rad, 2, 6)
+create_btn("Exp", sc_app.Exp, 2, 4)
+create_btn("x!", sc_app.Fact, 2, 5)
+
+create_btn("sin", sc_app.Sin, 3, 4)
+create_btn("cos", sc_app.Cos, 3, 5)
+create_btn("tan", sc_app.Tan, 3, 6)
+
+create_btn("sinh", sc_app.Sinh, 4, 4)
+create_btn("cosh", sc_app.Cosh, 4, 5)
+create_btn("tanh", sc_app.Tanh, 4, 6)
+
+create_btn("ln", sc_app.Ln, 5, 4)
+create_btn("log2", sc_app.Log_2, 5, 5)
+create_btn("log10", sc_app.Log_10, 5, 6)
+
+create_btn("x²", sc_app.Pow_2, 1, 7)
+create_btn("x³", sc_app.Pow_3, 2, 7)
+create_btn("10ⁿ", sc_app.Pow_10_n, 3, 7)
+create_btn("1/x", sc_app.One_div_x, 4, 7)
+create_btn("Abs", sc_app.Abs, 5, 7)
+
+root.mainloop()
